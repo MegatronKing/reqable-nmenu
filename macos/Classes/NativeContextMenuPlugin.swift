@@ -26,24 +26,22 @@ public class NativeContextMenuPlugin: NSObject, FlutterPlugin, NSMenuDelegate {
     }
     
     @objc func onItemSelected(_ sender: NSMenuItem) {
+        responded = true
         let id = getMenuItemId(sender)
         channel?.invokeMethod("onItemSelected", arguments: id, result: nil)
     }
     
     func onItemDismissed() {
+        responded = true
         channel?.invokeMethod("onMenuDismissed", arguments: nil, result: nil)
     }
     
     public func menuDidClose(_ menu: NSMenu) {
-        if let selectedItem = menu.highlightedItem {
-            if !responded {
-                onItemSelected(selectedItem)
-                responded = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05, execute: {
+            if menu.supermenu == nil && !self.responded {
+                self.onItemDismissed()
             }
-        } else if menu.supermenu == nil && !responded {
-            onItemDismissed()
-            responded = true
-        }
+        })
     }
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -77,10 +75,25 @@ public class NativeContextMenuPlugin: NSObject, FlutterPlugin, NSMenuDelegate {
         let menuItems = items.map { (item) -> NSMenuItem in
             let menuItem = NSMenuItem(
                 title: item["title"] as! String,
-                action: #selector(onItemSelected(_:)), keyEquivalent: "")
-
+                action: #selector(onItemSelected(_:)), 
+                keyEquivalent: item["keyId"] as? String ?? ""
+            )
             menuItem.representedObject = item
-            
+            menuItem.isEnabled = item["isEnabled"] as! Bool
+            menuItem.keyEquivalentModifierMask = []
+            if (item["keyShift"] as! Bool) {
+                menuItem.keyEquivalentModifierMask.insert(.shift)
+            }
+            if (item["keyMeta"] as! Bool) {
+                menuItem.keyEquivalentModifierMask.insert(.command)
+            }
+            if (item["keyControl"] as! Bool) {
+                menuItem.keyEquivalentModifierMask.insert(.control)
+            }
+            if (item["keyAlt"] as! Bool) {
+                menuItem.keyEquivalentModifierMask.insert(.option)
+            }
+            menuItem.target = self
             return menuItem
         }
         
