@@ -23,38 +23,67 @@ class _AppState extends State<App> {
       home: Scaffold(
         body: NativeContextMenuRegion(
           onDismissed: () => setState(() => action = 'Menu was dismissed'),
-          onItemSelected: (item) => setState(() {
-            action = '${item.title} was selected';
-          }),
-          menuItems: const [
+          menuItems: [
             NativeMenuItem(
               title: 'First item',
-              activator: SingleActivator(
+              activator: const SingleActivator(
                 LogicalKeyboardKey.keyA,
                 shift: true
-              )
+              ),
+              onTap: () {
+                setState(() => action = 'First item');
+              }
             ),
-            NativeMenuItem(title: 'Second item', isEnabled: false),
+            NativeMenuItem(
+              title: 'Second item selected',
+              isEnabled: false,
+              onTap: () {
+                setState(() => action = 'Second item selected');
+              }
+            ),
+            const NativeSeparatorMenuItem(),
             NativeMenuItem(
               title: 'Third item with submenu',
               items: [
-                NativeMenuItem(title: 'First subitem'),
-                NativeMenuItem(title: 'Second subitem'),
-                NativeMenuItem(title: 'Third subitem'),
+                NativeMenuItem(
+                  title: 'First subitem',
+                  onTap: () {
+                    setState(() => action = 'First subitem selected');
+                  }
+                ),
+                NativeMenuItem(
+                  title: 'Second subitem',
+                  onTap: () {
+                    setState(() => action = 'Second subitem selected');
+                  }
+                ),
+                NativeMenuItem(
+                  title: 'Third subitem',
+                  isEnabled: false,
+                  onTap: () {
+                    setState(() => action = 'Third subitem selected');
+                  }
+                ),
               ],
             ),
             NativeMenuItem(
               title: 'Fourth item',
-              activator: SingleActivator(
+              activator: const SingleActivator(
                 LogicalKeyboardKey.keyZ,
                 alt: true
-              )
+              ),
+              onTap: () {
+                setState(() => action = 'Fourth item selected');
+              }
             ),
             NativeMenuItem(
               title: 'Fifth item',
-              activator: SingleActivator(
+              activator: const SingleActivator(
                 LogicalKeyboardKey.keyB,
-              )
+              ),
+              onTap: () {
+                setState(() => action = 'Fifth item selected');
+              }
             ),
           ],
           child: Center(

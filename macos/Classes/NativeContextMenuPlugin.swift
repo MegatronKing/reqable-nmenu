@@ -5,37 +5,37 @@ public class NativeContextMenuPlugin: NSObject, FlutterPlugin, NSMenuDelegate {
     var contentView: NSView?
     var responded = false
     var channel: FlutterMethodChannel?;
-    
+
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(
             name: "native_context_menu",
             binaryMessenger: registrar.messenger
         )
-        
+
         let instance = NativeContextMenuPlugin()
         instance.contentView = NSApplication.shared.windows.first?.contentView
         instance.channel = channel;
-        
+
         registrar.addMethodCallDelegate(instance, channel: channel)
     }
-    
+
     func getMenuItemId(_ menuItem: NSMenuItem) -> Int {
         let menuItemData = (menuItem.representedObject as! NSDictionary)
         let id = menuItemData["id"] as! Int;
         return id;
     }
-    
+
     @objc func onItemSelected(_ sender: NSMenuItem) {
         responded = true
         let id = getMenuItemId(sender)
         channel?.invokeMethod("onItemSelected", arguments: id, result: nil)
     }
-    
+
     func onItemDismissed() {
         responded = true
         channel?.invokeMethod("onMenuDismissed", arguments: nil, result: nil)
     }
-    
+
     public func menuDidClose(_ menu: NSMenu) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05, execute: {
             if menu.supermenu == nil && !self.responded {
@@ -43,7 +43,7 @@ public class NativeContextMenuPlugin: NSObject, FlutterPlugin, NSMenuDelegate {
             }
         })
     }
-    
+
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         switch call.method {
         case "showMenu":
@@ -51,9 +51,9 @@ public class NativeContextMenuPlugin: NSObject, FlutterPlugin, NSMenuDelegate {
             let args = call.arguments as! NSDictionary
             let pos = args["position"] as! [Double]
             let items = args["items"] as! [NSDictionary]
-            
+
             let menu = createMenu(items)
-            
+
             let x = pos[0]
             var y = pos[1]
             if !contentView!.isFlipped {
@@ -70,12 +70,15 @@ public class NativeContextMenuPlugin: NSObject, FlutterPlugin, NSMenuDelegate {
             result(FlutterMethodNotImplemented)
         }
     }
-    
+
     func createMenu(_ items: [NSDictionary]) -> NSMenu {
         let menuItems = items.map { (item) -> NSMenuItem in
+            if (item["isSeparator"] as! Bool) {
+                return .separator()
+            }
             let menuItem = NSMenuItem(
                 title: item["title"] as! String,
-                action: #selector(onItemSelected(_:)), 
+                action: #selector(onItemSelected(_:)),
                 keyEquivalent: item["keyId"] as? String ?? ""
             )
             menuItem.representedObject = item
@@ -96,23 +99,24 @@ public class NativeContextMenuPlugin: NSObject, FlutterPlugin, NSMenuDelegate {
             menuItem.target = self
             return menuItem
         }
-        
+
         let menu = NSMenu()
 
         menu.autoenablesItems = false
         menu.delegate = self
-        
+
         menuItems.forEach { (item) -> Void in
             menu.addItem(item)
-            
+            if (item.isSeparatorItem) {
+                return
+            }
             let children = (item.representedObject as! NSDictionary)["items"] as! [NSDictionary]
-            
             if !children.isEmpty {
                 let submenu = createMenu(children)
                 menu.setSubmenu(submenu, for: item)
             }
         }
-        
+
         return menu
     }
 }

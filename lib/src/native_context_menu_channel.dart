@@ -37,12 +37,10 @@ class NativeContextMenuChannel {
     _channel.setMethodCallHandler((call) async {
       switch (call.method) {
         case _kOnItemSelected: {
-          print('kOnItemSelected');
           completer.complete(call.arguments);
           break;
         }
         case _kOnMenuDismissed: {
-          print('OnMenuDismissed');
           completer.complete(null);
           break;
         }
@@ -65,6 +63,7 @@ class NativeContextMenuChannel {
         id: ++index,
         title: item.title,
         isEnabled: item.isEnabled,
+        isSeparator: item.isSeparator,
         activator: item.activator,
         items: _wrapWithId(index * 100, item.items),
         origin: item,
@@ -82,6 +81,7 @@ class _NativeMenuItem {
     required this.id,
     required this.title,
     required this.isEnabled,
+    required this.isSeparator,
     required this.activator,
     required this.items,
     required this.origin,
@@ -90,6 +90,7 @@ class _NativeMenuItem {
   final int id;
   final String title;
   final bool isEnabled;
+  final bool isSeparator;
   final SingleActivator? activator;
   final List<_NativeMenuItem> items;
   final NativeMenuItem origin;
@@ -112,6 +113,7 @@ class _NativeMenuItem {
       'id': id,
       'title': title,
       'isEnabled': isEnabled,
+      'isSeparator': isSeparator,
       'keyId': activator?.keyId,
       'keyShift': activator?.shift ?? false,
       'keyMeta': activator?.meta ?? false,
@@ -157,9 +159,13 @@ class _ShowMenuArgs {
 extension _SingleActivatorExtension on SingleActivator {
 
   dynamic get keyId {
+    String label = trigger.keyLabel;
     if (Platform.isMacOS) {
-      return trigger.keyLabel;
+      if (label.length == 1) {
+        label = label.toLowerCase();
+      }
     }
+    return label;
   }
 
 }
