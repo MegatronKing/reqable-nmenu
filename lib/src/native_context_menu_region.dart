@@ -18,7 +18,7 @@ class NativeContextMenuRegion extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onSecondaryTapDown: (details) {
-        showContextMenu(
+        showNativeContextMenu(
           context: context,
           position: details.globalPosition,
           items: menuItems,
