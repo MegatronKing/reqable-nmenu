@@ -2,7 +2,7 @@ import Cocoa
 import FlutterMacOS
 
 public class NativeContextMenuPlugin: NSObject, FlutterPlugin, NSMenuDelegate {
-    var contentView: NSView?
+    var registrar: FlutterPluginRegistrar?
     var responded = false
     var channel: FlutterMethodChannel?;
 
@@ -13,10 +13,22 @@ public class NativeContextMenuPlugin: NSObject, FlutterPlugin, NSMenuDelegate {
         )
 
         let instance = NativeContextMenuPlugin()
-        instance.contentView = NSApplication.shared.windows.first?.contentView
-        instance.channel = channel;
+        instance.registrar = registrar
+        instance.channel = channel
 
         registrar.addMethodCallDelegate(instance, channel: channel)
+    }
+
+    private var window: NSWindow {
+        get {
+            return (self.registrar?.view?.window)!;
+        }
+    }
+
+    private var contentView: NSView {
+        get {
+            return (self.window.contentView)!;
+        }
     }
 
     func getMenuItemId(_ menuItem: NSMenuItem) -> Int {
@@ -49,18 +61,16 @@ public class NativeContextMenuPlugin: NSObject, FlutterPlugin, NSMenuDelegate {
         case "showMenu":
             responded = false
             let args = call.arguments as! NSDictionary
-            let pos = args["position"] as! [Double]
             let items = args["items"] as! [NSDictionary]
 
             let menu = createMenu(items)
-
-            let x = pos[0]
-            var y = pos[1]
-            if !contentView!.isFlipped {
-                let frameHeight = Double(contentView!.frame.height)
+            let mouseLocation = window.mouseLocationOutsideOfEventStream
+            let x = mouseLocation.x
+            var y = mouseLocation.y
+            if !contentView.isFlipped {
+                let frameHeight = Double(contentView.frame.height)
                 y = frameHeight - y
             }
-
             menu.popUp(
                 positioning: nil,
                 at: NSPoint(x: x, y: y),

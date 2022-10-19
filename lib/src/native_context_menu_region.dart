@@ -5,24 +5,22 @@ class NativeContextMenuRegion extends StatelessWidget {
 
   const NativeContextMenuRegion({
     Key? key,
-    required this.child,
     required this.menuItems,
+    required this.child,
     this.onDismissed,
-    this.menuOffset = Offset.zero,
   }) : super(key: key);
 
-  final Widget child;
   final List<NativeMenuItem> menuItems;
-  final Offset menuOffset;
+  final Widget child;
   final VoidCallback? onDismissed;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onSecondaryTapUp: (details) {
+      onSecondaryTapDown: (details) {
         showContextMenu(
           context: context,
-          position: details.globalPosition + menuOffset,
+          position: details.globalPosition,
           items: menuItems,
         );
       },
